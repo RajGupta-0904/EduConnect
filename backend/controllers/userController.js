@@ -2,15 +2,8 @@ const User = require('../models/User.js');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const otpGenerator=require('otp-generator')
-// const transporter =require('nodemailer')
-// const nodemailer = require('nodemailer');
-// const transporter = nodemailer.createTransport({
-//     service: 'gmail',
-//     auth: {
-//         user: process.env.EMAIL,
-//         pass: process.env.EMAIL_PASSWORD
-//     }
-// });
+const nodemailer = require('nodemailer');
+
 // const transporter = nodemailer.createTransport({
 //     host: 'smtp.office365.com',
 //     port: 587,
@@ -20,18 +13,25 @@ const otpGenerator=require('otp-generator')
 //         pass: process.env.EMAIL_PASSWORD
 //     }
 // });
-const nodemailer = require('nodemailer');
+// const nodemailer = require('nodemailer');
 require('dotenv').config(); // Ensure this is called at the top
-
 const transporter = nodemailer.createTransport({
-    host: 'smtp.office365.com',
-    port: 587,
-    secure: false, // true for 465, false for other ports
+    service: 'gmail',
     auth: {
         user: process.env.EMAIL,
         pass: process.env.EMAIL_PASSWORD
     }
 });
+
+// const transporter = nodemailer.createTransport({
+//     host: 'smtp.office365.com',
+//     port: 587,
+//     secure: false, // true for 465, false for other ports
+//     auth: {
+//         user: process.env.EMAIL,
+//         pass: process.env.EMAIL_PASSWORD
+//     }
+// });
 
 
 // Controller function to handle user registration
@@ -134,6 +134,17 @@ const transporter = nodemailer.createTransport({
 //         res.status(500).json({ error: error.message || 'An error occurred while registering user' });
 //     }
 // };
+function generateNumericOTP(length) {
+    const characters = '0123456789';
+    let otp = '';
+
+    for (let i = 0; i < length; i++) {
+        otp += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+
+    return otp;
+}
+
 
 
 exports.registerUser = async (req, res) => {
@@ -150,7 +161,15 @@ exports.registerUser = async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password.toString(), 10);
-        const otp = otpGenerator.generate(6, { upperCase: false, specialChars: false });
+        // const otp = otpGenerator.generate(6, { upperCase: false, specialChars: false });
+        // const otp = otpGenerator.generate(6, { digits: true, upperCase: false, specialChars: false });
+        // console.log(otp);
+        // const otp = otpGenerator.generate(6, { digits: true, alphabets: false, upperCase: false, specialChars: false });
+        const otp = generateNumericOTP(6); 
+
+console.log(otp);
+
+
         const otpExpiration = new Date(new Date().getTime() + 30 * 60000); // OTP valid for 30 minutes
 
         const newUser = new User({ name, email, password: hashedPassword, otp, otpExpiration });
