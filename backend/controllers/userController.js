@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const otpGenerator=require('otp-generator')
 const nodemailer = require('nodemailer');
-
+require('dotenv').config();
 // const transporter = nodemailer.createTransport({
 //     host: 'smtp.office365.com',
 //     port: 587,
@@ -13,8 +13,8 @@ const nodemailer = require('nodemailer');
 //         pass: process.env.EMAIL_PASSWORD
 //     }
 // });
-// const nodemailer = require('nodemailer');
-require('dotenv').config(); // Ensure this is called at the top
+
+
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -23,117 +23,6 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-// const transporter = nodemailer.createTransport({
-//     host: 'smtp.office365.com',
-//     port: 587,
-//     secure: false, // true for 465, false for other ports
-//     auth: {
-//         user: process.env.EMAIL,
-//         pass: process.env.EMAIL_PASSWORD
-//     }
-// });
-
-
-// Controller function to handle user registration
-// exports.registerUser = async (req, res) => {
-//     try {
-//         const { name, email, password } = req.body;
-//         // console.log(username,email,password,confirmPassword);
-
-//         // Check if the required fields are provided
-//         if (!name || !email || !password) {
-//             return res.status(400).json({ error: 'Please provide all the information' });
-//         }
-
-//         // Check if the user already exists
-//         const existingUser = await User.findOne({ email });
-//         if (existingUser) {
-//             return res.status(400).json({ error: 'User already exists' });
-//         }
-
-//         // Hash the password
-//         const hashedPassword = await bcrypt.hash(password.toString(), 10);
-
-//         otp = otpGenerator.generate(6, { upperCase: false, specialChars: false });
-//         const otpExpiration = new Date(new Date().getTime() + 30 * 60000); // OTP valid for 30 minutes
-
-
-//         // Create a new user instance
-//         const newUser = new User({ name, email, password: hashedPassword ,otp,otpExpiration});
-//         await newUser.save();
-
-//         const mailOptions = {
-//             from: process.env.EMAIL,
-//             to: email,
-//             subject: 'Your OTP Code',
-//             text: `Your OTP code is ${otp}`
-//         };
-
-//         transporter.sendMail(mailOptions, function (error, info) {
-//             if (error) {
-//                 return console.error('Error sending email:', error);
-//             } else {
-//                 console.log('Email sent: ' + info.response);
-//             }
-//         });
-//         res.status(201).json({ message: 'User registered successfully Please verify your email using the OTP sent.'  });
-//     } catch (error) {
-//         console.error('Error registering user: ', error);
-//         res.status(500).json({ error: error.message || 'An error occurred while registering user' });
-//     }
-// };
-// Controller function to handle user registration
-
-//workuing
-// exports.registerUser = async (req, res) => {
-//     try {
-//         const { name, email, password } = req.body;
-
-//         if (!name || !email || !password) {
-//             return res.status(400).json({ error: 'Please provide all the information' });
-//         }
-
-//         const existingUser = await User.findOne({ email });
-//         if (existingUser) {
-//             return res.status(400).json({ error: 'User already exists' });
-//         }
-
-//         const hashedPassword = await bcrypt.hash(password.toString(), 10);
-//         const otp = otpGenerator.generate(6, { upperCase: false, specialChars: false });
-//         const otpExpiration = new Date(new Date().getTime() + 30 * 60000); // OTP valid for 30 minutes
-
-//         const newUser = new User({ name, email, password: hashedPassword, otp, otpExpiration });
-//         await newUser.save();
-
-//         const mailOptions = {
-//             from: process.env.EMAIL,
-//             to: email,
-//             subject: 'Your OTP Code',
-//             text: `Your OTP code is ${otp}`
-//         };
-
-//         transporter.sendMail(mailOptions, function (error, info) {
-//             if (error) {
-//                 console.error('Error sending email:', error);
-//                 return res.status(500).json({ error: 'Failed to send OTP email' });
-//             } else {
-//                 console.log('Email sent: ' + info.response);
-//                 res.status(201).json({ message: 'User registered successfully. Please verify your email using the OTP sent.' });
-//             }
-//         });
-//         transporter.verify(function (error, success) {
-//             if (error) {
-//                 console.error('SMTP Connection Error:', error);
-//             } else {
-//                 console.log('SMTP Server is ready to take our messages');
-//             }
-//         });
-        
-//     } catch (error) {
-//         console.error('Error registering user: ', error);
-//         res.status(500).json({ error: error.message || 'An error occurred while registering user' });
-//     }
-// };
 function generateNumericOTP(length) {
     const characters = '0123456789';
     let otp = '';
@@ -151,7 +40,7 @@ const sendOtpEmail = (email, otp) => {
         from: process.env.EMAIL,
         to: email,
         subject: 'Your OTP Code',
-        text: `Your one-time password (OTP) for verifying your account is ${otp}. This code is valid for the next 30 minutes.`
+        text: `Your one-time password (OTP) for verifying your account is ${otp}. This code is valid for the next 10  minutes.`
     };
     console.log(`Sending OTP to: ${email}`);
 
@@ -178,8 +67,7 @@ exports.registerUser = async (req, res) => {
         // console.log(otp);
         // const otp = otpGenerator.generate(6, { digits: true, alphabets: false, upperCase: false, specialChars: false });
         const otp = generateNumericOTP(6); 
-
-console.log(otp);
+        console.log(otp);
 
 
         const otpExpiration = new Date(new Date().getTime() + 2* 60000); // OTP valid for 30 minutes
@@ -210,6 +98,7 @@ console.log(otp);
         res.status(500).json({ error: error.message || 'An error occurred while registering user' });
     }
 };
+
 // Controller function to handle user login 
 exports.loginUser = async (req, res) => {
     try {
@@ -301,9 +190,6 @@ exports.logoutUser = async (req, res) => {
     }
 };
 
-
-
-// In userController.js
 exports.verifyOtp = async (req, res) => {
     try {
         const { email, otp } = req.body;
