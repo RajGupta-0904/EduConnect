@@ -14,6 +14,26 @@ require('dotenv').config();
 //     }
 // });
 
+// const twilio = require('twilio');
+// const accountSid = process.env.TWILIO_ACCOUNT_SID;
+// const authToken = process.env.TWILIO_AUTH_TOKEN;
+// const client = new twilio(accountSid, authToken);
+
+
+// const sendOtpSMS = async (mobile, otp) => {
+//     try {
+//         await client.messages.create({
+//             body: `Your OTP code is ${otp}. This code is valid for the next 10 minutes.`,
+//             from: process.env.TWILIO_PHONE_NUMBER,
+//             to: mobile
+//         });
+//     } catch (error) {
+//         console.error('Error sending OTP via SMS: ', error);
+//         throw new Error('Failed to send OTP via SMS. Please ensure SMS permissions are enabled for the region.');
+//     }
+// };
+
+
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -50,8 +70,12 @@ const sendOtpEmail = (email, otp) => {
 
 exports.registerUser = async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        // const { name, email, password,mobile } = req.body;
+        const { name, email, password} = req.body;
 
+        // if (!name || !email || !password ||!mobile) {
+        //     return res.status(400).json({ error: 'Please provide all the information' });
+        // }
         if (!name || !email || !password) {
             return res.status(400).json({ error: 'Please provide all the information' });
         }
@@ -72,7 +96,8 @@ exports.registerUser = async (req, res) => {
 
         const otpExpiration = new Date(new Date().getTime() + 2* 60000); // OTP valid for 30 minutes
 
-        const newUser = new User({ name, email, password: hashedPassword, otp, otpExpiration });
+        // const newUser = new User({ name, email, password: hashedPassword, otp, otpExpiration,mobile });
+        const newUser = new User({ name, email, password: hashedPassword, otp, otpExpiration});
         await newUser.save();
 
         const mailOptions = {
@@ -83,6 +108,7 @@ exports.registerUser = async (req, res) => {
         };
 
         console.log(`Sending OTP to: ${email}`); // Log the recipient's email
+        // await sendOtpSMS(mobile, otp);
 
         transporter.sendMail(mailOptions, function (error, info) {
             if (error) {
