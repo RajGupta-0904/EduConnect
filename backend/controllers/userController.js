@@ -146,6 +146,18 @@ function generateNumericOTP(length) {
 }
 
 
+const sendOtpEmail = (email, otp) => {
+    const mailOptions = {
+        from: process.env.EMAIL,
+        to: email,
+        subject: 'Your OTP Code',
+        text: `Your one-time password (OTP) for verifying your account is ${otp}. This code is valid for the next 30 minutes.`
+    };
+    console.log(`Sending OTP to: ${email}`);
+
+    return transporter.sendMail(mailOptions);
+};
+
 
 exports.registerUser = async (req, res) => {
     try {
@@ -170,7 +182,7 @@ exports.registerUser = async (req, res) => {
 console.log(otp);
 
 
-        const otpExpiration = new Date(new Date().getTime() + 30 * 60000); // OTP valid for 30 minutes
+        const otpExpiration = new Date(new Date().getTime() + 2* 60000); // OTP valid for 30 minutes
 
         const newUser = new User({ name, email, password: hashedPassword, otp, otpExpiration });
         await newUser.save();
@@ -179,7 +191,7 @@ console.log(otp);
             from: process.env.EMAIL, // Sender address
             to: email, // Recipient address (user's email)
             subject: 'Your OTP Code',
-            text: `Your OTP code is ${otp}`
+            text: `Your one-time password (OTP) for verifying your account on EduConnect is ${otp}. This code is valid for the next 30 minutes.`
         };
 
         console.log(`Sending OTP to: ${email}`); // Log the recipient's email
@@ -317,6 +329,35 @@ exports.verifyOtp = async (req, res) => {
     } catch (error) {
         console.error('Error verifying OTP: ', error);
         res.status(500).json({ error: error.message || 'An error occurred while verifying OTP' });
+    }
+};
+
+exports.resendOtp = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ error: 'Please provide an email address' });
+        }
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const otp = generateNumericOTP(6);
+        const otpExpiration = new Date(new Date().getTime() + 2 * 60000); // OTP valid for 2 minutes
+
+        user.otp = otp;
+        user.otpExpiration = otpExpiration;
+        await user.save();
+
+        await sendOtpEmail(email, otp);
+        console.log(`ReSending OTP to: ${email}`);
+        res.status(200).json({ message: 'OTP resent successfully. Please check your email.' });
+    } catch (error) {
+        console.error('Error resending OTP: ', error);
+        res.status(500).json({ error: error.message || 'An error occurred while resending OTP' });
     }
 };
 
