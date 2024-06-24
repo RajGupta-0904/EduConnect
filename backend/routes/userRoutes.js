@@ -16,4 +16,8 @@ router.delete('/user', authenticateUser, userController.deleteUserAccount);
 router.post('/verifyotp',userController.verifyOtp);
 router.post('/resendotp', userController.resendOtp);
 
+router.post('/password-reset-initiate', authenticateUser, userController.initiatePasswordReset);
+router.post('/password-reset-verify', authenticateUser, userController.verifyPasswordResetOtp);
+
+
 module.exports = router;

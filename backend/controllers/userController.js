@@ -240,6 +240,7 @@ exports.resendOtp = async (req, res) => {
 
         await sendOtpEmail(email, otp);
         console.log(`ReSending OTP to: ${email}`);
+        console.log(otp);
         res.status(200).json({ message: 'OTP resent successfully. Please check your email.' });
     } catch (error) {
         console.error('Error resending OTP: ', error);
@@ -247,4 +248,93 @@ exports.resendOtp = async (req, res) => {
     }
 };
 
+exports.initiatePasswordReset = async (req, res) => {
+    try {
+        const { oldPassword, newPassword, confirmNewPassword } = req.body;
+        const userId = req.userId;  // Assuming authenticateUser middleware sets req.userId
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Verify old password
+        const isPasswordValid = await bcrypt.compare(oldPassword, user.password);
+        if (!isPasswordValid) {
+            return res.status(401).json({ error: 'Invalid old password' });
+        }
+
+        // Check if new password and confirm new password match
+        if (newPassword !== confirmNewPassword) {
+            return res.status(400).json({ error: 'New passwords do not match' });
+        }
+
+        // Generate OTP
+        // const otp = otpGenerator.generate(6, { upperCase: false, specialChars: false });
+        const otp = generateNumericOTP(6); 
+        console.log(otp);
+        const otpExpiration = new Date(new Date().getTime() + 2 * 60000); // OTP valid for 30 minutes
+
+        // Update user with OTP and expiration
+        user.otp = otp;
+        user.otpExpiration = otpExpiration;
+        await user.save();
+
+        const email=user.email;
+        const mailOptions = {
+            from: process.env.EMAIL,
+            to: user.email,
+            subject: 'Password Reset OTP',
+            text: `Your OTP code for password reset is ${otp}`
+        };
+
+        console.log(`Sending OTP to: ${email}`); // Log the recipient's email
+        transporter.sendMail(mailOptions, function (error, info) {
+            if (error) {
+                return console.error('Error sending email:', error);
+            } else {
+                console.log('Email sent: ' + info.response);
+            }
+        });
+
+        res.status(200).json({ message: 'OTP sent to email for password reset' });
+    } catch (error) {
+        console.error('Error initiating password reset: ', error);
+        res.status(500).json({ error: error.message || 'An error occurred while initiating password reset' });
+    }
+};
+
+exports.verifyPasswordResetOtp = async (req, res) => {
+    try {
+        const { otp, newPassword } = req.body;
+        const userId = req.userId;  // Assuming authenticateUser middleware sets req.userId
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        if (user.otp !== otp) {
+            return res.status(400).json({ error: 'Invalid OTP' });
+        }
+
+        if (user.otpExpiration < new Date()) {
+            return res.status(400).json({ error: 'OTP expired' });
+        }
+
+        // Hash the new password
+        const hashedPassword = await bcrypt.hash(newPassword.toString(), 10);
+
+        // Update user password and clear OTP
+        user.password = hashedPassword;
+        user.otp = undefined;
+        user.otpExpiration = undefined;
+        await user.save();
+
+        res.status(200).json({ message: 'Password reset successfully' });
+    } catch (error) {
+        console.error('Error verifying OTP and resetting password: ', error);
+        res.status(500).json({ error: error.message || 'An error occurred while verifying OTP and resetting password' });
+    }
+};
 
