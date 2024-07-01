@@ -16,7 +16,7 @@ const MasterSchema = new mongoose.Schema({
     password: {
         type: String,
         required: true,
-        minlength: 6 
+        minlength:6,
     },
     otp: {
         type: String,
@@ -26,19 +26,16 @@ const MasterSchema = new mongoose.Schema({
         type: Date,
         required: false
     },
+    mobile:{
+        type:String,
+        unique:true,
+        maxlength:10
+    }
 
-    mobile: {
-        type: String,
-        required: true,
-        unique: true,
-        minlength:10,
     
-        // match: /^\d{10}$/ // Mobile number validation regex (assuming 10 digit numbers)
-    },
-    
-});
+},{timestamps:true});
 
 // Create the model
-const User = mongoose.model('User', userSchema);
+const Master = mongoose.model('Master', MasterSchema);
 
-module.exports = User;
+module.exports = Master;

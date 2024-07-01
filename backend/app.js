@@ -3,8 +3,10 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const routes = require('./routes');
 const userRouter=require('./routes/userRoutes');
+const MasterRouter=require('./routes/masterRoutes');
 
 const cors = require('cors');
+const Master = require('./models/Master');
 require('dotenv').config();
 
 const app = express();
@@ -39,6 +41,7 @@ app.use(bodyParser.json());
 //Routes 
 // app.use(routes);
 app.use(userRouter);
+app.use(MasterRouter);
 app.use(routes);
 
 

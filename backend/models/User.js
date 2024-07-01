@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+
     email: {
         type: String,
         required: true,
@@ -26,13 +27,12 @@ const userSchema = new mongoose.Schema({
         type: Date,
         required: false
     },
+    img:{
+        type:String,
+        required:false
 
-    // mobile: {
-    //     type: String,
-    //     required: true,
-    //     unique: true,
-    //     // match: /^\d{10}$/ // Mobile number validation regex (assuming 10 digit numbers)
-    // },
+    }
+
     
 });
 

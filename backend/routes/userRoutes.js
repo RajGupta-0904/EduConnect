@@ -4,7 +4,7 @@ const userController = require('../controllers/userController');
 const { authenticateUser } = require('../middlewares/authentication');
 
 // User authentication routes
-router.post('/register', userController.registerUser);
+router.post('/userregister', userController.registerUser);
 router.post('/login', userController.loginUser);
 router.post('/logout', userController.logoutUser);
 
