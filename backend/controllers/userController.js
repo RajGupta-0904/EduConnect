@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const otpGenerator=require('otp-generator')
 const nodemailer = require('nodemailer');
+const Master = require('../models/Master.js');
 require('dotenv').config();
 // const transporter = nodemailer.createTransport({
 //     host: 'smtp.office365.com',
@@ -220,22 +221,35 @@ exports.verifyOtp = async (req, res) => {
     try {
         const { email, otp } = req.body;
         const user = await User.findOne({ email });
-
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
+        const master=await Master.findOne({email});
+        if(!email || !otp){
+            return res.status(400).json({error:"please provide an email address or otp "});
         }
+        if(!user && !master){
+            return res.status(404).json({error:"User and master not found"});
+        }
+        // if (!user) {
+        //     return res.status(404).json({ error: 'User not found' });
+        // }
+        
 
-        if (user.otp !== otp) {
+        if ( (user && user.otp !== otp) || (master && master.otp!==otp)) {
             return res.status(400).json({ error: 'Invalid OTP' });
         }
 
-        if (user.otpExpiration < new Date()) {
+        if ((user && user.otpExpiration < new Date()) ||(master && master.otpExpiration < new Date())) {
             return res.status(400).json({ error: 'OTP expired' });
         }
-
-        user.otp = undefined;
-        user.otpExpiration = undefined;
-        await user.save();
+        if(user){
+            user.otp = undefined;
+            user.otpExpiration = undefined;
+            await user.save();
+        }
+        if(master){
+            master.otp=undefined;
+            master.otpExpiration=undefined;
+            await master.save();
+        }
 
         res.status(200).json({ message: 'OTP verified successfully. You can now log in.' });
     } catch (error) {
@@ -253,20 +267,39 @@ exports.resendOtp = async (req, res) => {
         }
 
         const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
+        const master=await Master.findOne({email});
+        if(!user && !master){
+            return res.status(404).json({error:'Master Not found'})
         }
+        // if (!user) {
+        //     return res.status(404).json({ error: 'User not found' });
+        // }
 
         const otp = generateNumericOTP(6);
         const otpExpiration = new Date(new Date().getTime() + 2 * 60000); // OTP valid for 2 minutes
-
-        user.otp = otp;
-        user.otpExpiration = otpExpiration;
-        await user.save();
-
-        await sendOtpEmail(email, otp);
-        console.log(`ReSending OTP to: ${email}`);
         console.log(otp);
+        // user.otp = otp;
+        // user.otpExpiration = otpExpiration;
+        // await user.save();
+
+        // await sendOtpEmail(email, otp);
+        // console.log(`ReSending OTP to: ${email}`);
+        // console.log(otp);
+        if (user) {
+            user.otp = otp;
+            user.otpExpiration = otpExpiration;
+            await user.save();
+            await sendOtpEmail(email, otp); // Send OTP email to user
+            console.log(`Resending OTP to User: ${email}`);
+        }
+        if(master){
+            master.otp=otp;
+            master.otpExpiration=otpExpiration;
+            await master.save();
+            await sendOtpEmail(email,otp);
+            console.log(`resending otp to ${email}`);
+        }
+        
         res.status(200).json({ message: 'OTP resent successfully. Please check your email.' });
     } catch (error) {
         console.error('Error resending OTP: ', error);
