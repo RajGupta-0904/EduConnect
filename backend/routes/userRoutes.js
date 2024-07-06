@@ -12,7 +12,7 @@ router.post('/logout', userController.logoutUser);
 router.get('/user', authenticateUser, userController.getUserDetails);
 router.put('/user', authenticateUser, userController.updateUserDetails);
 router.delete('/user', authenticateUser, userController.deleteUserAccount);
-
+// common for the both user as well as master 
 router.post('/verifyotp',userController.verifyOtp);
 router.post('/resendotp', userController.resendOtp);
 
