@@ -59,8 +59,8 @@ exports.masterRegister = async (req, res) => {
             from: process.env.EMAIL,
             to: email,
             subject: 'Your OTP Code',
-            // text: `Hello ${name}, your one-time password (OTP) for verifying your account on EduConnect is ${otp}. This code is valid for the next 30 minutes.`
-            html: html_mail
+            text: `Hello ${name}, your one-time password (OTP) for verifying your account on EduConnect is ${otp}. This code is valid for the next 30 minutes.`
+            // html: html_mail
         };
 
         console.log(`Sending OTP to: ${email}`);
